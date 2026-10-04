@@ -1,0 +1,16 @@
+Customer Financial Services Portal
+
+A customer web portal allows authenticated customers to view personal account
+information and transaction history. Customers access the portal over the
+internet.
+
+The web portal communicates with a REST API. The API processes customer
+requests and accesses a PostgreSQL database containing customer and transaction
+data.
+
+Support staff use a separate administrator portal to manage customer accounts.
+Administrative users can update customer information and account status.
+
+The architecture does not currently specify the identity provider,
+authentication mechanism, network segmentation, encryption controls, logging
+architecture, or API authorisation model.

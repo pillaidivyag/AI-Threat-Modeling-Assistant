@@ -1,0 +1,187 @@
+{
+  "assets": [
+    {
+      "name": "Customer Account Information",
+      "description": "Customer data stored in the PostgreSQL database, including personal details and transaction history.",
+      "basis": "Stated"
+    },
+    {
+      "name": "User Authentication Endpoint",
+      "description": "API endpoint used by users to log in to the web portal.",
+      "basis": "Stated"
+    },
+    {
+      "name": "Administrator Portal",
+      "description": "Separate portal used by support staff to manage customer accounts.",
+      "basis": "Stated"
+    },
+    {
+      "name": "REST API Gateway",
+      "description": "The interface between the web portal and the PostgreSQL database.",
+      "basis": "Inferred"
+    },
+    {
+      "name": "Database Access Layer",
+      "description": "Component responsible for retrieving customer and transaction data from PostgreSQL.",
+      "basis": "Inferred"
+    },
+    {
+      "name": "User Session Management",
+      "description": "Mechanism for maintaining authenticated user sessions during browsing.",
+      "basis": "Assumption"
+    }
+  ],
+  "components": [
+    {
+      "name": "Web Portal",
+      "description": "Frontend interface for users to view account information.",
+      "basis": "Stated"
+    },
+    {
+      "name": "REST API",
+      "description": "Backend service that processes user requests and interacts with the database.",
+      "basis": "Stated"
+    },
+    {
+      "name": "PostgreSQL Database",
+      "description": "Stores customer and transaction data.",
+      "basis": "Stated"
+    },
+    {
+      "name": "Administrator Portal",
+      "description": "Tool used by support staff to manage customer accounts.",
+      "basis": "Stated"
+    }
+  ],
+  "trust_boundaries": [
+    {
+      "name": "Web Portal to REST API",
+      "description": "Boundary between frontend and backend services.",
+      "basis": "Stated"
+    },
+    {
+      "name": "REST API to PostgreSQL Database",
+      "description": "Boundary between application logic and data storage.",
+      "basis": "Stated"
+    },
+    {
+      "name": "Administrator Portal to Database",
+      "description": "Boundary between admin tools and customer data storage.",
+      "basis": "Inferred"
+    }
+  ],
+  "data_flows": [
+    {
+      "source": "Web Portal",
+      "destination": "REST API",
+      "data": "User login credentials and session tokens",
+      "basis": "Stated"
+    },
+    {
+      "source": "REST API",
+      "destination": "PostgreSQL Database",
+      "data": "Customer account and transaction data",
+      "basis": "Stated"
+    },
+    {
+      "source": "Administrator Portal",
+      "destination": "PostgreSQL Database",
+      "data": "Account management operations",
+      "basis": "Inferred"
+    }
+  ],
+  "threats": [
+    {
+      "id": "STRIDE-Auth-01",
+      "stride": "Spoofing",
+      "element": "User Authentication Endpoint",
+      "basis": "Stated",
+      "scenario": "An attacker could intercept or manipulate login credentials during transmission, leading to unauthorized access to customer accounts if authentication is not performed over secure channels.",
+      "likelihood": "Medium",
+      "impact": "High",
+      "rationale": "Authentication is required for access, but no mention of secure transport (e.g., HTTPS).",
+      "mitigation": "Enforce TLS 1.2+ for all communication between the web portal and the REST API.",
+      "risk_score": 6,
+      "risk": "High"
+    },
+    {
+      "id": "STRIDE-Auth-02",
+      "stride": "Spoofing",
+      "element": "User Session Management",
+      "basis": "Assumption",
+      "scenario": "An attacker could obtain a valid session token through cross-site scripting (XSS) and reuse it to access another user's account if session tokens are not properly scoped or invalidated.",
+      "likelihood": "Medium",
+      "impact": "High",
+      "rationale": "Session tokens are not described, but session management is a common attack surface in web applications.",
+      "mitigation": "Implement secure session tokens with short expiration times and include a secure, non-reusable refresh token mechanism.",
+      "risk_score": 6,
+      "risk": "High"
+    },
+    {
+      "id": "STRIDE-Priv-01",
+      "stride": "Spoofing",
+      "element": "Administrator Portal",
+      "basis": "Stated",
+      "scenario": "An attacker with access to the administrator portal could manipulate account data or disable user access if authentication or authorisation is not strictly enforced.",
+      "likelihood": "Low",
+      "impact": "High",
+      "rationale": "Administrator portal has elevated privileges, but no details on access controls are provided.",
+      "mitigation": "Enforce multi-factor authentication (MFA) and role-based access control (RBAC) for the administrator portal.",
+      "risk_score": 3,
+      "risk": "Medium"
+    },
+    {
+      "id": "STRIDE-Priv-02",
+      "stride": "Elevation of Privilege",
+      "element": "REST API to PostgreSQL Database",
+      "basis": "Stated",
+      "scenario": "An attacker who gains access to the REST API could exploit a vulnerability in the database query layer to execute arbitrary SQL commands, leading to data exposure or modification.",
+      "likelihood": "Medium",
+      "impact": "High",
+      "rationale": "The API accesses a database directly, and no input validation is mentioned.",
+      "mitigation": "Implement parameterised queries and validate all inputs to prevent SQL injection.",
+      "risk_score": 6,
+      "risk": "High"
+    },
+    {
+      "id": "STRIDE-Data-01",
+      "stride": "Information Disclosure",
+      "element": "Customer Account Information",
+      "basis": "Stated",
+      "scenario": "An attacker could access customer transaction data through a misconfigured API endpoint or error message, exposing sensitive financial information.",
+      "likelihood": "Medium",
+      "impact": "High",
+      "rationale": "Customer data is stored in the database and exposed via API responses.",
+      "mitigation": "Implement strict response headers, avoid exposing error details, and apply data minimisation principles.",
+      "risk_score": 6,
+      "risk": "High"
+    },
+    {
+      "id": "STRIDE-Avail-01",
+      "stride": "Denial of Service",
+      "element": "REST API",
+      "basis": "Inferred",
+      "scenario": "An attacker could send a large number of requests to the API to exhaust server resources, causing service degradation or unavailability for legitimate users.",
+      "likelihood": "Low",
+      "impact": "Medium",
+      "rationale": "The API is exposed to the internet and handles user requests, making it a potential target for DDoS attacks.",
+      "mitigation": "Implement rate limiting and use a web application firewall (WAF) to detect and block abnormal traffic patterns.",
+      "risk_score": 2,
+      "risk": "Low"
+    }
+  ],
+  "security_questions": [
+    "Is the administrator portal accessible only to authenticated support staff with verified identities?",
+    "Are all API endpoints properly documented and protected with access controls?",
+    "Is input validation enforced on all API endpoints, especially those retrieving or modifying customer data?",
+    "Are session tokens stored securely and transmitted over encrypted channels?",
+    "Is the PostgreSQL database configured with proper access controls and audit logging?",
+    "Are error messages returned to users sanitized to avoid revealing internal system details?"
+  ],
+  "assumptions": [
+    "Session management is implemented in the web portal.",
+    "The REST API does not perform input validation on all request parameters.",
+    "The administrator portal has no built-in audit trail or access logging.",
+    "The web portal does not implement content security policies (CSP) or XSS protections."
+  ]
+}
